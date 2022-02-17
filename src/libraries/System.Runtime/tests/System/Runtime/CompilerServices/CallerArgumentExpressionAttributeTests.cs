@@ -17,6 +17,20 @@ namespace System.Runtime.CompilerServices.Tests
             Assert.Equal(value, caea.ParameterName);
         }
 
+        [Theory]
+        public static void Ctor_ResolveConstants_DefaultsFalse()
+        {
+            var caea = new CallerArgumentExpressionAttribute("parameterName");
+            Assert.False(caea.ResolveConstants);
+        }
+
+        [Theory]
+        public static void Ctor_ResolveConstants_RoundTrip(bool value)
+        {
+            var caea = new CallerArgumentExpressionAttribute("", value);
+            Assert.Equal(value, caea.ResolveConstants);
+        }
+
         [Fact]
         public static void BasicTest()
         {
