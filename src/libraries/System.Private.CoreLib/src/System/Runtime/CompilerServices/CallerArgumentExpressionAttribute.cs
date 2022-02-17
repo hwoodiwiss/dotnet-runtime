@@ -9,8 +9,16 @@ namespace System.Runtime.CompilerServices
         public CallerArgumentExpressionAttribute(string parameterName)
         {
             ParameterName = parameterName;
+            ResolveConstants = false;
+        }
+
+        public CallerArgumentExpressionAttribute(string parameterName, bool resolveConstants)
+        {
+            ParameterName = parameterName;
+            ResolveConstants = resolveConstants;
         }
 
         public string ParameterName { get; }
+        public bool ResolveConstants { get; }
     }
 }
