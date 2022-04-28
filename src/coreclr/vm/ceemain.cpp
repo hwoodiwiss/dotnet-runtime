@@ -158,7 +158,6 @@
 #include "syncclean.hpp"
 #include "typeparse.h"
 #include "debuginfostore.h"
-#include "eemessagebox.h"
 #include "finalizerthread.h"
 #include "threadsuspend.h"
 #include "disassembler.h"
@@ -666,11 +665,25 @@ void EEStartupHelper()
         Thread::StaticInitialize();
         ThreadpoolMgr::StaticInitialize();
 
+        JITInlineTrackingMap::StaticInitialize();
         MethodDescBackpatchInfoTracker::StaticInitialize();
         CodeVersionManager::StaticInitialize();
         TieredCompilationManager::StaticInitialize();
         CallCountingManager::StaticInitialize();
         OnStackReplacementManager::StaticInitialize();
+
+#ifdef TARGET_UNIX
+        ExecutableAllocator::InitPreferredRange();
+#else
+        {
+            // Record coreclr.dll geometry
+            PEDecoder pe(GetClrModuleBase());
+
+            g_runtimeLoadedBaseAddress = (SIZE_T)pe.GetBase();
+            g_runtimeVirtualSize = (SIZE_T)pe.GetVirtualSize();
+            ExecutableAllocator::InitLazyPreferredRange(g_runtimeLoadedBaseAddress, g_runtimeVirtualSize, GetRandomInt(64));
+        }
+#endif // !TARGET_UNIX
 
         InitThreadManager();
         STRESS_LOG0(LF_STARTUP, LL_ALWAYS, "Returned successfully from InitThreadManager");
@@ -807,20 +820,6 @@ void EEStartupHelper()
 
         StubManager::InitializeStubManagers();
 
-#ifdef TARGET_UNIX
-        ExecutableAllocator::InitPreferredRange();
-#else
-        {
-            // Record coreclr.dll geometry
-            PEDecoder pe(GetClrModuleBase());
-
-            g_runtimeLoadedBaseAddress = (SIZE_T)pe.GetBase();
-            g_runtimeVirtualSize = (SIZE_T)pe.GetVirtualSize();
-            ExecutableAllocator::InitLazyPreferredRange(g_runtimeLoadedBaseAddress, g_runtimeVirtualSize, GetRandomInt(64));
-        }
-#endif // !TARGET_UNIX
-
-
         // Set up the cor handle map. This map is used to load assemblies in
         // memory instead of using the normal system load
         PEImage::Startup();
@@ -831,7 +830,8 @@ void EEStartupHelper()
 
         Stub::Init();
         StubLinkerCPU::Init();
-
+        StubPrecode::StaticInitialize();
+        FixupPrecode::StaticInitialize();
 
         InitializeGarbageCollector();
 
@@ -1222,9 +1222,6 @@ void STDMETHODCALLTYPE EEShutDownHelper(BOOL fIsDllUnloading)
     STRESS_LOG1(LF_STARTUP, LL_INFO10, "EEShutDown entered unloading = %d", fIsDllUnloading);
 
 #ifdef _DEBUG
-    if (_DbgBreakCount)
-        _ASSERTE(!"An assert was hit before EE Shutting down");
-
     if (CLRConfig::GetConfigValue(CLRConfig::INTERNAL_BreakOnEEShutdown))
         _ASSERTE(!"Shutting down EE!");
 #endif
@@ -1431,12 +1428,7 @@ part2:
                 g_fEEShutDown |= ShutDown_Phase2;
 
                 // Shutdown finalizer before we suspend all background threads. Otherwise we
-                // never get to finalize anything. Obviously.
-
-#ifdef _DEBUG
-                if (_DbgBreakCount)
-                    _ASSERTE(!"An assert was hit After Finalizer run");
-#endif
+                // never get to finalize anything.
 
                 // No longer process exceptions
                 g_fNoExceptions = true;
@@ -1487,11 +1479,6 @@ part2:
 #if USE_DISASSEMBLER
                 Disassembler::StaticClose();
 #endif // USE_DISASSEMBLER
-
-#ifdef _DEBUG
-                if (_DbgBreakCount)
-                    _ASSERTE(!"EE Shutting down after an assert");
-#endif
 
                 WriteJitHelperCountToSTRESSLOG();
 

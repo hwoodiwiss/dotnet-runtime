@@ -130,8 +130,10 @@ namespace System.Reflection.Emit
 
         #region Internal Members
 
-        internal void CreateMethodBodyHelper(ILGenerator il!!)
+        internal void CreateMethodBodyHelper(ILGenerator il)
         {
+            ArgumentNullException.ThrowIfNull(il);
+
             // Sets the IL of the method.  An ILGenerator is passed as an argument and the method
             // queries this instance to get all of the information which it needs.
 
@@ -507,14 +509,17 @@ namespace System.Reflection.Emit
 
         public override Type[] GetGenericArguments() => m_inst ?? Type.EmptyTypes;
 
+        [RequiresDynamicCode("The native code for this instantiation might not be available at runtime.")]
         [RequiresUnreferencedCode("If some of the generic arguments are annotated (either with DynamicallyAccessedMembersAttribute, or generic constraints), trimming can't validate that the requirements of those annotations are met.")]
         public override MethodInfo MakeGenericMethod(params Type[] typeArguments)
         {
             return MethodBuilderInstantiation.MakeGenericMethod(this, typeArguments);
         }
 
-        public GenericTypeParameterBuilder[] DefineGenericParameters(params string[] names!!)
+        public GenericTypeParameterBuilder[] DefineGenericParameters(params string[] names)
         {
+            ArgumentNullException.ThrowIfNull(names);
+
             if (names.Length == 0)
                 throw new ArgumentException(SR.Arg_EmptyArray, nameof(names));
 
@@ -611,15 +616,11 @@ namespace System.Reflection.Emit
 
         public void SetParameters(params Type[] parameterTypes)
         {
-            AssemblyBuilder.CheckContext(parameterTypes);
-
             SetSignature(null, null, null, parameterTypes, null, null);
         }
 
         public void SetReturnType(Type? returnType)
         {
-            AssemblyBuilder.CheckContext(returnType);
-
             SetSignature(returnType, null, null, null, null, null);
         }
 
@@ -631,11 +632,6 @@ namespace System.Reflection.Emit
             // But we cannot because that would be a breaking change from V2.
             if (m_token != 0)
                 return;
-
-            AssemblyBuilder.CheckContext(returnType);
-            AssemblyBuilder.CheckContext(returnTypeRequiredCustomModifiers, returnTypeOptionalCustomModifiers, parameterTypes);
-            AssemblyBuilder.CheckContext(parameterTypeRequiredCustomModifiers);
-            AssemblyBuilder.CheckContext(parameterTypeOptionalCustomModifiers);
 
             ThrowIfGeneric();
 
@@ -726,8 +722,11 @@ namespace System.Reflection.Emit
             return GetModuleBuilder();
         }
 
-        public void SetCustomAttribute(ConstructorInfo con!!, byte[] binaryAttribute!!)
+        public void SetCustomAttribute(ConstructorInfo con, byte[] binaryAttribute)
         {
+            ArgumentNullException.ThrowIfNull(con);
+            ArgumentNullException.ThrowIfNull(binaryAttribute);
+
             ThrowIfGeneric();
 
             TypeBuilder.DefineCustomAttribute(m_module, MetadataToken,
@@ -738,8 +737,10 @@ namespace System.Reflection.Emit
                 ParseCA(con);
         }
 
-        public void SetCustomAttribute(CustomAttributeBuilder customBuilder!!)
+        public void SetCustomAttribute(CustomAttributeBuilder customBuilder)
         {
+            ArgumentNullException.ThrowIfNull(customBuilder);
+
             ThrowIfGeneric();
 
             customBuilder.CreateCustomAttribute((ModuleBuilder)m_module, MetadataToken);

@@ -41,22 +41,12 @@ namespace System.Text
             AppendFormatHelper(provider, format, new ParamsArray(args));
         }
 
-        internal void AppendSpanFormattable<T>(T value, string? format, IFormatProvider? provider) where T : ISpanFormattable
-        {
-            if (value.TryFormat(_chars.Slice(_pos), out int charsWritten, format, provider))
-            {
-                _pos += charsWritten;
-            }
-            else
-            {
-                Append(value.ToString(format, provider));
-            }
-        }
-
         // Copied from StringBuilder, can't be done via generic extension
         // as ValueStringBuilder is a ref struct and cannot be used in a generic.
-        internal void AppendFormatHelper(IFormatProvider? provider, string format!!, ParamsArray args)
+        internal void AppendFormatHelper(IFormatProvider? provider, string format, ParamsArray args)
         {
+            ArgumentNullException.ThrowIfNull(format);
+
             // Undocumented exclusive limits on the range for Argument Hole Index and Argument Hole Alignment.
             const int IndexLimit = 1000000; // Note:            0 <= ArgIndex < IndexLimit
             const int WidthLimit = 1000000; // Note:  -WidthLimit <  ArgAlign < WidthLimit

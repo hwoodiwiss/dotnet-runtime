@@ -117,8 +117,8 @@ namespace System.Net
         ///     Constructor for an IPv6 Address with a specified Scope.
         ///   </para>
         /// </devdoc>
-        public IPAddress(byte[] address!!, long scopeid) :
-            this(new ReadOnlySpan<byte>(address), scopeid)
+        public IPAddress(byte[] address, long scopeid) :
+            this(new ReadOnlySpan<byte>(address ?? ThrowAddressNullException()), scopeid)
         {
         }
 
@@ -175,8 +175,8 @@ namespace System.Net
         ///     Constructor for IPv4 and IPv6 Address.
         ///   </para>
         /// </devdoc>
-        public IPAddress(byte[] address!!) :
-            this(new ReadOnlySpan<byte>(address))
+        public IPAddress(byte[] address) :
+            this(new ReadOnlySpan<byte>(address ?? ThrowAddressNullException()))
         {
         }
 
@@ -231,8 +231,10 @@ namespace System.Net
             return (address != null);
         }
 
-        public static IPAddress Parse(string ipString!!)
+        public static IPAddress Parse(string ipString)
         {
+            ArgumentNullException.ThrowIfNull(ipString);
+
             return IPAddressParser.Parse(ipString.AsSpan(), tryParse: false)!;
         }
 
@@ -409,8 +411,10 @@ namespace System.Net
             return HostToNetworkOrder(network);
         }
 
-        public static bool IsLoopback(IPAddress address!!)
+        public static bool IsLoopback(IPAddress address)
         {
+            ArgumentNullException.ThrowIfNull(address);
+
             if (address.IsIPv6)
             {
                 // Do Equals test for IPv6 addresses
@@ -628,6 +632,9 @@ namespace System.Net
             uint address = (uint)_numbers![6] << 16 | (uint)_numbers[7];
             return new IPAddress((uint)HostToNetworkOrder(unchecked((int)address)));
         }
+
+        [DoesNotReturn]
+        private static byte[] ThrowAddressNullException() => throw new ArgumentNullException("address");
 
         private sealed class ReadOnlyIPAddress : IPAddress
         {
