@@ -436,17 +436,19 @@ namespace System
 
         public static string Format([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
         {
-            return FormatHelper(null, format, new ParamsArray(arg0));
+            return FormatHelper(null, format, new ReadOnlySpan<object?>(in arg0));
         }
 
         public static string Format([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
         {
-            return FormatHelper(null, format, new ParamsArray(arg0, arg1));
+            TwoObjects two = new TwoObjects(arg0, arg1);
+            return FormatHelper(null, format, MemoryMarshal.CreateReadOnlySpan(ref two.Arg0, 2));
         }
 
         public static string Format([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
         {
-            return FormatHelper(null, format, new ParamsArray(arg0, arg1, arg2));
+            ThreeObjects three = new ThreeObjects(arg0, arg1, arg2);
+            return FormatHelper(null, format, MemoryMarshal.CreateReadOnlySpan(ref three.Arg0, 3));
         }
 
         public static string Format([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[] args)
@@ -458,22 +460,24 @@ namespace System
                 ArgumentNullException.Throw(format is null ? nameof(format) : nameof(args));
             }
 
-            return FormatHelper(null, format, new ParamsArray(args));
+            return FormatHelper(null, format, args);
         }
 
         public static string Format(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
         {
-            return FormatHelper(provider, format, new ParamsArray(arg0));
+            return FormatHelper(provider, format, new ReadOnlySpan<object?>(in arg0));
         }
 
         public static string Format(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
         {
-            return FormatHelper(provider, format, new ParamsArray(arg0, arg1));
+            TwoObjects two = new TwoObjects(arg0, arg1);
+            return FormatHelper(provider, format, MemoryMarshal.CreateReadOnlySpan(ref two.Arg0, 2));
         }
 
         public static string Format(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
         {
-            return FormatHelper(provider, format, new ParamsArray(arg0, arg1, arg2));
+            ThreeObjects three = new ThreeObjects(arg0, arg1, arg2);
+            return FormatHelper(provider, format, MemoryMarshal.CreateReadOnlySpan(ref three.Arg0, 3));
         }
 
         public static string Format(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, params object?[] args)
@@ -485,10 +489,10 @@ namespace System
                 ArgumentNullException.Throw(format is null ? nameof(format) : nameof(args));
             }
 
-            return FormatHelper(provider, format, new ParamsArray(args));
+            return FormatHelper(provider, format, args);
         }
 
-        private static string FormatHelper(IFormatProvider? provider, string format, ParamsArray args)
+        private static string FormatHelper(IFormatProvider? provider, string format, ReadOnlySpan<object?> args)
         {
             ArgumentNullException.ThrowIfNull(format);
 
@@ -1335,17 +1339,7 @@ namespace System
             {
                 // Per the method's documentation, we'll short-circuit the search for separators.
                 // But we still need to post-process the results based on the caller-provided flags.
-
-                string candidate = this;
-                if (((options & StringSplitOptions.TrimEntries) != 0) && (count > 0))
-                {
-                    candidate = candidate.Trim();
-                }
-                if (((options & StringSplitOptions.RemoveEmptyEntries) != 0) && (candidate.Length == 0))
-                {
-                    count = 0;
-                }
-                return (count == 0) ? Array.Empty<string>() : new string[] { candidate };
+                return CreateSplitArrayOfThisAsSoleValue(options, count);
             }
 
             if (separators.IsEmpty)
@@ -1418,17 +1412,7 @@ namespace System
             {
                 // Per the method's documentation, we'll short-circuit the search for separators.
                 // But we still need to post-process the results based on the caller-provided flags.
-
-                string candidate = this;
-                if (((options & StringSplitOptions.TrimEntries) != 0) && (count > 0))
-                {
-                    candidate = candidate.Trim();
-                }
-                if (((options & StringSplitOptions.RemoveEmptyEntries) != 0) && (candidate.Length == 0))
-                {
-                    count = 0;
-                }
-                return (count == 0) ? Array.Empty<string>() : new string[] { candidate };
+                return CreateSplitArrayOfThisAsSoleValue(options, count);
             }
 
             if (singleSeparator)
@@ -1454,7 +1438,7 @@ namespace System
             // Handle the special case of no replaces.
             if (sepList.Length == 0)
             {
-                return new string[] { this };
+                return CreateSplitArrayOfThisAsSoleValue(options, count);
             }
 
             string[] result = (options != StringSplitOptions.None)
@@ -1467,6 +1451,28 @@ namespace System
             return result;
         }
 
+        private string[] CreateSplitArrayOfThisAsSoleValue(StringSplitOptions options, int count)
+        {
+            Debug.Assert(count >= 0);
+
+            if (count != 0)
+            {
+                string candidate = this;
+
+                if ((options & StringSplitOptions.TrimEntries) != 0)
+                {
+                    candidate = candidate.Trim();
+                }
+
+                if ((options & StringSplitOptions.RemoveEmptyEntries) == 0 || candidate.Length != 0)
+                {
+                    return new string[] { candidate };
+                }
+            }
+
+            return Array.Empty<string>();
+        }
+
         private string[] SplitInternal(string separator, int count, StringSplitOptions options)
         {
             var sepListBuilder = new ValueListBuilder<int>(stackalloc int[StackallocIntBufferSizeLimit]);
@@ -1476,14 +1482,7 @@ namespace System
             if (sepList.Length == 0)
             {
                 // there are no separators so sepListBuilder did not rent an array from pool and there is no need to dispose it
-                string candidate = this;
-                if ((options & StringSplitOptions.TrimEntries) != 0)
-                {
-                    candidate = candidate.Trim();
-                }
-                return ((candidate.Length == 0) && ((options & StringSplitOptions.RemoveEmptyEntries) != 0))
-                    ? Array.Empty<string>()
-                    : new string[] { candidate };
+                return CreateSplitArrayOfThisAsSoleValue(options, count);
             }
 
             string[] result = (options != StringSplitOptions.None)

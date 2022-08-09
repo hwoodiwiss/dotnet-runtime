@@ -9,7 +9,7 @@ using System.Runtime.Versioning;
 namespace System
 {
     // Because we have special type system support that says a boxed Nullable<T>
-    // can be used where a boxed<T> is use, Nullable<T> can not implement any intefaces
+    // can be used where a boxed<T> is use, Nullable<T> can not implement any interfaces
     // at all (since T may not).   Do NOT add any interfaces to Nullable!
     //
     [Serializable]
@@ -101,7 +101,7 @@ namespace System
         {
             ArgumentNullException.ThrowIfNull(nullableType);
 
-#if CORERT
+#if NATIVEAOT
             // This is necessary to handle types without reflection metadata
             if (nullableType.TryGetEEType(out EETypePtr nullableEEType))
             {

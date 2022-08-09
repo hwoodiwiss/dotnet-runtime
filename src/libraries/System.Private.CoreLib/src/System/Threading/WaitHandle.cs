@@ -40,7 +40,7 @@ namespace System.Threading
         {
         }
 
-        [Obsolete("WaitHandleHandle has been deprecated. Use the SafeWaitHandle property instead.")]
+        [Obsolete("WaitHandle.Handle has been deprecated. Use the SafeWaitHandle property instead.")]
         public virtual IntPtr Handle
         {
             get => _waitHandle == null ? InvalidHandle : _waitHandle.DangerousGetHandle();
@@ -176,7 +176,7 @@ namespace System.Threading
 
         /// <summary>
         /// Obtains all of the corresponding safe wait handles and adds a ref to each. Since the <see cref="SafeWaitHandle"/>
-        /// property is publically modifiable, this makes sure that we add and release refs one the same set of safe wait
+        /// property is publicly modifiable, this makes sure that we add and release refs one the same set of safe wait
         /// handles to keep them alive during a multi-wait operation.
         /// </summary>
         private static void ObtainSafeWaitHandles(

@@ -310,16 +310,49 @@ namespace System
             return enumType.GetEnumUnderlyingType();
         }
 
-#if !CORERT
+#if !NATIVEAOT
         public static TEnum[] GetValues<TEnum>() where TEnum : struct, Enum =>
             (TEnum[])GetValues(typeof(TEnum));
 #endif
 
-        [RequiresDynamicCode("It might not be possible to create an array of the enum type at runtime. Use the GetValues<TEnum> overload instead.")]
+        [RequiresDynamicCode("It might not be possible to create an array of the enum type at runtime. Use the GetValues<TEnum> overload or the GetValuesAsUnderlyingType method instead.")]
         public static Array GetValues(Type enumType)
         {
             ArgumentNullException.ThrowIfNull(enumType);
             return enumType.GetEnumValues();
+        }
+
+        /// <summary>
+        /// Retrieves an array of the values of the underlying type constants in a specified enumeration type.
+        /// </summary>
+        /// <typeparam name="TEnum">An enumeration type.</typeparam>
+        /// /// <remarks>
+        /// This method can be used to get enumeration values when creating an array of the enumeration type is challenging.
+        /// For example, <see cref="T:System.Reflection.MetadataLoadContext" /> or on a platform where runtime codegen is not available.
+        /// </remarks>
+        /// <returns>An array that contains the values of the underlying type constants in enumType.</returns>
+        public static Array GetValuesAsUnderlyingType<TEnum>() where TEnum : struct, Enum =>
+            typeof(TEnum).GetEnumValuesAsUnderlyingType();
+
+        /// <summary>
+        /// Retrieves an array of the values of the underlying type constants in a specified enumeration.
+        /// </summary>
+        /// <param name="enumType">An enumeration type.</param>
+        /// <remarks>
+        /// This method can be used to get enumeration values when creating an array of the enumeration type is challenging.
+        /// For example, <see cref="T:System.Reflection.MetadataLoadContext" /> or on a platform where runtime codegen is not available.
+        /// </remarks>
+        /// <returns>An array that contains the values of the underlying type constants in  <paramref name="enumType" />.</returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when the enumeration type is null.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the type is not an enumeration type.
+        /// </exception>
+        public static Array GetValuesAsUnderlyingType(Type enumType)
+        {
+            ArgumentNullException.ThrowIfNull(enumType);
+            return enumType.GetEnumValuesAsUnderlyingType();
         }
 
         [Intrinsic]
@@ -1008,7 +1041,7 @@ namespace System
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool StartsNumber(char c) => char.IsInRange(c, '0', '9') || c == '-' || c == '+';
+        private static bool StartsNumber(char c) => char.IsAsciiDigit(c) || c == '-' || c == '+';
 
         public static object ToObject(Type enumType, object value)
         {
@@ -1486,11 +1519,11 @@ namespace System
         {
             ArgumentNullException.ThrowIfNull(enumType);
 
-            if (!enumType.IsEnum)
-                throw new ArgumentException(SR.Arg_MustBeEnum, nameof(enumType));
             if (enumType is not RuntimeType rtType)
                 throw new ArgumentException(SR.Arg_MustBeType, nameof(enumType));
-#if CORERT
+            if (!rtType.IsActualEnum)
+                throw new ArgumentException(SR.Arg_MustBeEnum, nameof(enumType));
+#if NATIVEAOT
             // Check for the unfortunate "typeof(Outer<>.InnerEnum)" corner case.
             // https://github.com/dotnet/runtime/issues/7976
             if (enumType.ContainsGenericParameters)

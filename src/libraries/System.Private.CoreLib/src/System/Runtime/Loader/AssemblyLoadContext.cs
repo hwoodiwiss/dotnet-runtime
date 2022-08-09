@@ -308,7 +308,7 @@ namespace System.Runtime.Loader
             return null;
         }
 
-#if !CORERT
+#if !NATIVEAOT
         [System.Security.DynamicSecurityMethod] // Methods containing StackCrawlMark local var has to be marked DynamicSecurityMethod
         public Assembly LoadFromAssemblyName(AssemblyName assemblyName)
         {
@@ -547,7 +547,7 @@ namespace System.Runtime.Loader
 
         /// <summary>Opaque disposable struct used to restore CurrentContextualReflectionContext</summary>
         /// <remarks>
-        /// This is an implmentation detail of the AssemblyLoadContext.EnterContextualReflection APIs.
+        /// This is an implementation detail of the AssemblyLoadContext.EnterContextualReflection APIs.
         /// It is a struct, to avoid heap allocation.
         /// It is required to be public to avoid boxing.
         /// <see cref="System.Runtime.Loader.AssemblyLoadContext.EnterContextualReflection"/>
@@ -578,7 +578,7 @@ namespace System.Runtime.Loader
             }
         }
 
-#if !CORERT
+#if !NATIVEAOT
         // This method is invoked by the VM when using the host-provided assembly load context
         // implementation.
         private static Assembly? Resolve(IntPtr gchManagedAssemblyLoadContext, AssemblyName assemblyName)
@@ -731,7 +731,7 @@ namespace System.Runtime.Loader
 
             return null;
         }
-#endif // !CORERT
+#endif // !NATIVEAOT
 
         [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026:RequiresUnreferencedCode",
             Justification = "Satellite assemblies have no code in them and loading is not a problem")]

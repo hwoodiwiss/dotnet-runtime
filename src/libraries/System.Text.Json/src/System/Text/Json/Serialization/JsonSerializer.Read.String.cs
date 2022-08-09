@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -42,6 +43,7 @@ namespace System.Text.Json
         /// UTF-8 methods since the implementation natively uses UTF-8.
         /// </remarks>
         [RequiresUnreferencedCode(SerializationUnreferencedCodeMessage)]
+        [RequiresDynamicCode(SerializationRequiresDynamicCodeMessage)]
         public static TValue? Deserialize<TValue>([StringSyntax(StringSyntaxAttribute.Json)] string json, JsonSerializerOptions? options = null)
         {
             if (json is null)
@@ -78,6 +80,7 @@ namespace System.Text.Json
         /// UTF-8 methods since the implementation natively uses UTF-8.
         /// </remarks>
         [RequiresUnreferencedCode(SerializationUnreferencedCodeMessage)]
+        [RequiresDynamicCode(SerializationRequiresDynamicCodeMessage)]
         public static TValue? Deserialize<TValue>([StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<char> json, JsonSerializerOptions? options = null)
         {
             // default/null span is treated as empty
@@ -114,6 +117,7 @@ namespace System.Text.Json
         /// UTF-8 methods since the implementation natively uses UTF-8.
         /// </remarks>
         [RequiresUnreferencedCode(SerializationUnreferencedCodeMessage)]
+        [RequiresDynamicCode(SerializationRequiresDynamicCodeMessage)]
         public static object? Deserialize([StringSyntax(StringSyntaxAttribute.Json)] string json, Type returnType, JsonSerializerOptions? options = null)
         {
             if (json is null)
@@ -157,6 +161,7 @@ namespace System.Text.Json
         /// UTF-8 methods since the implementation natively uses UTF-8.
         /// </remarks>
         [RequiresUnreferencedCode(SerializationUnreferencedCodeMessage)]
+        [RequiresDynamicCode(SerializationRequiresDynamicCodeMessage)]
         public static object? Deserialize([StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<char> json, Type returnType, JsonSerializerOptions? options = null)
         {
             if (returnType is null)
@@ -212,6 +217,7 @@ namespace System.Text.Json
                 ThrowHelper.ThrowArgumentNullException(nameof(jsonTypeInfo));
             }
 
+            jsonTypeInfo.EnsureConfigured();
             return ReadFromSpan<TValue?>(json.AsSpan(), jsonTypeInfo);
         }
 
@@ -253,6 +259,7 @@ namespace System.Text.Json
                 ThrowHelper.ThrowArgumentNullException(nameof(jsonTypeInfo));
             }
 
+            jsonTypeInfo.EnsureConfigured();
             return ReadFromSpan<TValue?>(json, jsonTypeInfo);
         }
 
@@ -362,7 +369,7 @@ namespace System.Text.Json
 
         private static TValue? ReadFromSpan<TValue>(ReadOnlySpan<char> json, JsonTypeInfo jsonTypeInfo)
         {
-            jsonTypeInfo.EnsureConfigured();
+            Debug.Assert(jsonTypeInfo.IsConfigured);
             byte[]? tempArray = null;
 
             // For performance, avoid obtaining actual byte count unless memory usage is higher than the threshold.

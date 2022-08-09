@@ -32,6 +32,14 @@ namespace System.Text.RegularExpressions
         private WeakReference<RegexReplacement?>? _replref;   // cached parsed replacement pattern
         private volatile RegexRunner? _runner;                // cached runner
 
+#if DEBUG
+        // These members aren't used from Regex(), but we want to keep them in debug builds for now,
+        // so this is a convenient place to include them rather than needing a debug-only illink file.
+        [DynamicDependency(nameof(SaveDGML))]
+        [DynamicDependency(nameof(GenerateUnicodeTables))]
+        [DynamicDependency(nameof(SampleMatches))]
+        [DynamicDependency(nameof(Explore))]
+#endif
         protected Regex()
         {
             internalMatchTimeout = s_defaultMatchTimeout;
@@ -48,12 +56,12 @@ namespace System.Text.RegularExpressions
         /// <summary>
         /// Creates a regular expression object for the specified regular expression, with options that modify the pattern.
         /// </summary>
-        public Regex([StringSyntax(StringSyntaxAttribute.Regex, "options")] string pattern, RegexOptions options) :
+        public Regex([StringSyntax(StringSyntaxAttribute.Regex, nameof(options))] string pattern, RegexOptions options) :
             this(pattern, options, s_defaultMatchTimeout, culture: null)
         {
         }
 
-        public Regex([StringSyntax(StringSyntaxAttribute.Regex, "options")] string pattern, RegexOptions options, TimeSpan matchTimeout) :
+        public Regex([StringSyntax(StringSyntaxAttribute.Regex, nameof(options))] string pattern, RegexOptions options, TimeSpan matchTimeout) :
             this(pattern, options, matchTimeout, culture: null)
         {
         }

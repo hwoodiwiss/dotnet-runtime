@@ -112,6 +112,7 @@ static const Entry s_sysNative[] =
     DllImportEntry(SystemNative_LockFileRegion)
     DllImportEntry(SystemNative_LChflags)
     DllImportEntry(SystemNative_LChflagsCanSetHiddenFlag)
+    DllImportEntry(SystemNative_FChflags)
     DllImportEntry(SystemNative_CanGetHiddenFlag)
     DllImportEntry(SystemNative_ReadProcessStatusInfo)
     DllImportEntry(SystemNative_Log)
@@ -122,7 +123,6 @@ static const Entry s_sysNative[] =
     DllImportEntry(SystemNative_Calloc)
     DllImportEntry(SystemNative_Free)
     DllImportEntry(SystemNative_Malloc)
-    DllImportEntry(SystemNative_MemSet)
     DllImportEntry(SystemNative_Realloc)
     DllImportEntry(SystemNative_GetSpaceInfoForMountPoint)
     DllImportEntry(SystemNative_GetFormatInfoForMountPoint)
@@ -234,6 +234,7 @@ static const Entry s_sysNative[] =
     DllImportEntry(SystemNative_LowLevelMonitor_TimedWait)
     DllImportEntry(SystemNative_LowLevelMonitor_Signal_Release)
     DllImportEntry(SystemNative_LoadLibrary)
+    DllImportEntry(SystemNative_GetLoadLibraryError)
     DllImportEntry(SystemNative_GetProcAddress)
     DllImportEntry(SystemNative_FreeLibrary)
     DllImportEntry(SystemNative_GetDefaultSearchOrderPseudoHandle)
@@ -241,6 +242,7 @@ static const Entry s_sysNative[] =
     DllImportEntry(SystemNative_Exit)
     DllImportEntry(SystemNative_Abort)
     DllImportEntry(SystemNative_UTimensat)
+    DllImportEntry(SystemNative_FUTimens)
     DllImportEntry(SystemNative_GetTimestamp)
     DllImportEntry(SystemNative_GetCpuUtilization)
     DllImportEntry(SystemNative_GetPwUidR)
@@ -268,6 +270,7 @@ static const Entry s_sysNative[] =
     DllImportEntry(SystemNative_GetEnv)
     DllImportEntry(SystemNative_GetEnviron)
     DllImportEntry(SystemNative_FreeEnviron)
+    DllImportEntry(SystemNative_GetGroupName)
 };
 
 EXTERN_C const void* SystemResolveDllImport(const char* name);

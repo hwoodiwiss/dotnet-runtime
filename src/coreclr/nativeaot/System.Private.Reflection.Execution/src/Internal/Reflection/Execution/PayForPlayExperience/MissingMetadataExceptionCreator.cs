@@ -15,32 +15,32 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
 {
     public static class MissingMetadataExceptionCreator
     {
-        internal static MissingMetadataException Create(string resourceId, MemberInfo pertainant)
+        internal static MissingMetadataException Create(string resourceId, MemberInfo? pertainant)
         {
             return CreateFromMetadataObject(resourceId, pertainant);
         }
 
-        internal static MissingMetadataException Create(TypeInfo pertainant)
+        internal static MissingMetadataException Create(TypeInfo? pertainant)
         {
             return CreateFromMetadataObject(SR.Reflection_InsufficientMetadata_EdbNeeded, pertainant);
         }
 
-        internal static MissingMetadataException Create(TypeInfo pertainant, string nestedTypeName)
+        internal static MissingMetadataException Create(TypeInfo? pertainant, string nestedTypeName)
         {
             if (pertainant == null)
                 return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, "<unavailable>"));
 
             string usefulPertainant = ComputeUsefulPertainantIfPossible(pertainant);
             if (usefulPertainant == null)
-                return new MissingMetadataException(Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, pertainant.ToString()));
+                return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, pertainant.ToString()));
             else
             {
                 usefulPertainant = usefulPertainant + "." + DiagnosticMappingTables.ConvertBackTickNameToNameWithReducerInputFormat(nestedTypeName, null);
-                return new MissingMetadataException(Format(SR.Reflection_InsufficientMetadata_EdbNeeded, usefulPertainant));
+                return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_EdbNeeded, usefulPertainant));
             }
         }
 
-        internal static MissingMetadataException Create(Type pertainant)
+        internal static MissingMetadataException Create(Type? pertainant)
         {
             return CreateFromMetadataObject(SR.Reflection_InsufficientMetadata_EdbNeeded, pertainant);
         }
@@ -50,12 +50,12 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
             return CreateFromMetadataObject(SR.Reflection_InsufficientMetadata_EdbNeeded, pertainant);
         }
 
-        private static MissingMetadataException CreateFromString(string pertainant)
+        private static MissingMetadataException CreateFromString(string? pertainant)
         {
             if (pertainant == null)
                 return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, "<unavailable>"));
             else
-                return new MissingMetadataException(Format(SR.Reflection_InsufficientMetadata_EdbNeeded, pertainant));
+                return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_EdbNeeded, pertainant));
         }
 
         internal static MissingMetadataException CreateMissingArrayTypeException(Type elementType, bool isMultiDim, int rank)
@@ -71,16 +71,16 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
             return CreateFromString(s);
         }
 
-        internal static MissingMetadataException CreateFromMetadataObject(string resourceId, object pertainant)
+        internal static MissingMetadataException CreateFromMetadataObject(string resourceId, object? pertainant)
         {
             if (pertainant == null)
                 return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, "<unavailable>"));
 
             string usefulPertainant = ComputeUsefulPertainantIfPossible(pertainant);
             if (usefulPertainant == null)
-                return new MissingMetadataException(Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, pertainant.ToString()));
+                return new MissingMetadataException(SR.Format(SR.Reflection_InsufficientMetadata_NoHelpAvailable, pertainant.ToString()));
             else
-                return new MissingMetadataException(Format(resourceId, usefulPertainant));
+                return new MissingMetadataException(SR.Format(resourceId, usefulPertainant));
         }
 
         public static string ComputeUsefulPertainantIfPossible(object pertainant)
@@ -99,16 +99,13 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
                     return type.ToDisplayStringIfAvailable(null);
             }
 
-            if (pertainant is MemberInfo)
+            if (pertainant is MemberInfo memberInfo)
             {
-                MemberInfo memberInfo = (MemberInfo)pertainant;
-
                 StringBuilder friendlyName = new StringBuilder(memberInfo.DeclaringType.ToDisplayStringIfAvailable(null));
                 friendlyName.Append('.');
                 friendlyName.Append(memberInfo.Name);
-                if (pertainant is MethodBase)
+                if (pertainant is MethodBase method)
                 {
-                    MethodBase method = (MethodBase)pertainant;
                     bool first;
 
                     // write out generic parameters
@@ -249,7 +246,7 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
                     {
                         genericParameterOffsets.Add(s.Length);
                         if (genericArgCount > 0)
-                            s = s + ",";
+                            s += ",";
                     }
                     s += "]";
                 }
@@ -283,7 +280,7 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
             // Similarly, if we found too few, add them at the end.
             while (genericTypeArguments.Length > genericParameterOffsets.Count)
             {
-                genericTypeDefinitionString = genericTypeDefinitionString + ",";
+                genericTypeDefinitionString += ",";
                 genericParameterOffsets.Add(genericTypeDefinitionString.Length);
             }
 
@@ -302,22 +299,5 @@ namespace Internal.Reflection.Execution.PayForPlayExperience
             return genericTypeName.ToString();
         }
 
-        //
-        // This is a workaround to prevent crucial information being lost when compiling console apps using the retail ILC.
-        // This combination turns rich error messages from the framework into resource keys without the substitution strings.
-        // We'll detect this case here and append the substitution string manually.
-        //
-        private static string Format(string resourceMessage, object parameter)
-        {
-            if (resourceMessage.Contains("{0}"))
-                return SR.Format(resourceMessage, parameter);
-
-            // If the rich exception message was eaten by the IL2IL transform, make sure the resulting message
-            // has a link pointing the user towards the .NET Native debugging guide. These get normally appended
-            // to the restricted message by the transform, but the pattern here is not recognized by the rewriter.
-            // At this point we know the message doesn't come from resources (because message == resource key), so
-            // we can't do much to make this localizable.
-            return resourceMessage + ": " + parameter + ". For more information, visit http://go.microsoft.com/fwlink/?LinkId=623485";
-        }
     }
 }

@@ -45,7 +45,33 @@ namespace System.Threading.RateLimiting
         /// <param name="options">Options to specify the behavior of the <see cref="TokenBucketRateLimiter"/>.</param>
         public TokenBucketRateLimiter(TokenBucketRateLimiterOptions options)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            if (options is null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+            if (options.TokenLimit <= 0 || options.TokensPerPeriod <= 0)
+            {
+                throw new ArgumentException($"Both {nameof(options.TokenLimit)} and {nameof(options.TokensPerPeriod)} must be set to values greater than 0.", nameof(options));
+            }
+            if (options.QueueLimit < 0)
+            {
+                throw new ArgumentException($"{nameof(options.QueueLimit)} must be set to a value greater than or equal to 0.", nameof(options));
+            }
+            if (options.ReplenishmentPeriod < TimeSpan.Zero)
+            {
+                throw new ArgumentException($"{nameof(options.ReplenishmentPeriod)} must be set to a value greater than or equal to TimeSpan.Zero.", nameof(options));
+            }
+
+            _options = new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = options.TokenLimit,
+                QueueProcessingOrder = options.QueueProcessingOrder,
+                QueueLimit = options.QueueLimit,
+                ReplenishmentPeriod = options.ReplenishmentPeriod,
+                TokensPerPeriod = options.TokensPerPeriod,
+                AutoReplenishment = options.AutoReplenishment
+            };
+
             _tokenCount = options.TokenLimit;
 
             _idleSince = _lastReplenishmentTick = Stopwatch.GetTimestamp();
@@ -60,7 +86,7 @@ namespace System.Threading.RateLimiting
         public override int GetAvailablePermits() => _tokenCount;
 
         /// <inheritdoc/>
-        protected override RateLimitLease AcquireCore(int tokenCount)
+        protected override RateLimitLease AttemptAcquireCore(int tokenCount)
         {
             // These amounts of resources can never be acquired
             if (tokenCount > _options.TokenLimit)
@@ -91,7 +117,7 @@ namespace System.Threading.RateLimiting
         }
 
         /// <inheritdoc/>
-        protected override ValueTask<RateLimitLease> WaitAsyncCore(int tokenCount, CancellationToken cancellationToken = default)
+        protected override ValueTask<RateLimitLease> AcquireAsyncCore(int tokenCount, CancellationToken cancellationToken = default)
         {
             // These amounts of resources can never be acquired
             if (tokenCount > _options.TokenLimit)
@@ -126,7 +152,11 @@ namespace System.Threading.RateLimiting
                             RequestRegistration oldestRequest = _queue.DequeueHead();
                             _queueCount -= oldestRequest.Count;
                             Debug.Assert(_queueCount >= 0);
-                            oldestRequest.Tcs.TrySetResult(FailedLease);
+                            if (!oldestRequest.Tcs.TrySetResult(FailedLease))
+                            {
+                                // Updating queue count is handled by the cancellation code
+                                _queueCount += oldestRequest.Count;
+                            }
                         }
                         while (_options.QueueLimit - _queueCount < tokenCount);
                     }
@@ -328,7 +358,7 @@ namespace System.Threading.RateLimiting
                         ? _queue.DequeueHead()
                         : _queue.DequeueTail();
                     next.CancellationTokenRegistration.Dispose();
-                    next.Tcs.SetResult(FailedLease);
+                    next.Tcs.TrySetResult(FailedLease);
                 }
             }
         }
