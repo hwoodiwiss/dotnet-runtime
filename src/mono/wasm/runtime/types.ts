@@ -99,14 +99,45 @@ export interface ResourceRequest {
     hash?: string;
 }
 
+export interface LoadingResource {
+    name: string;
+    url: string;
+    response: Promise<Response>;
+}
+
 // Types of assets that can be in the mono-config.js/mono-config.json file (taken from /src/tasks/WasmAppBuilder/WasmAppBuilder.cs)
 export interface AssetEntry extends ResourceRequest {
-    virtualPath?: string, // if specified, overrides the path of the asset in the virtual filesystem and similar data structures once loaded.
+    /**
+     * If specified, overrides the path of the asset in the virtual filesystem and similar data structures once downloaded.
+     */
+    virtualPath?: string,
+    /**
+     * Culture code
+     */
     culture?: string,
-    loadRemote?: boolean, // if true, an attempt will be made to load the asset from each location in @args.remoteSources.
-    isOptional?: boolean // if true, any failure to load this asset will be ignored.
-    buffer?: ArrayBuffer // if provided, we don't have to fetch it
-    pending?: LoadingResource // if provided, we don't have to start fetching it
+    /**
+     * If true, an attempt will be made to load the asset from each location in MonoConfig.remoteSources.
+     */
+    loadRemote?: boolean, // 
+    /**
+     * If true, the runtime startup would not fail if the asset download was not successful.
+     */
+    isOptional?: boolean
+    /**
+     * If provided, runtime doesn't have to fetch the data. 
+     * Runtime would set the buffer to null after instantiation to free the memory.
+     */
+    buffer?: ArrayBuffer
+    /**
+     * It's metadata + fetch-like Promise<Response>
+     * If provided, the runtime doesn't have to initiate the download. It would just await the response.
+     */
+    pendingDownload?: LoadingResource
+}
+
+export interface AssetEntryInternal extends AssetEntry {
+    // this is almost the same as pendingDownload, but it could have multiple values in time, because of re-try download logic
+    pendingDownloadInternal?: LoadingResource
 }
 
 export type AssetBehaviours =
@@ -116,7 +147,9 @@ export type AssetBehaviours =
     | "heap" // store asset into the native heap
     | "icu" // load asset as an ICU data archive
     | "vfs" // load asset into the virtual filesystem (for fopen, File.Open, etc)
-    | "dotnetwasm"; // the binary of the dotnet runtime
+    | "dotnetwasm" // the binary of the dotnet runtime
+    | "js-module-crypto" // the javascript module for subtle crypto
+    | "js-module-threads" // the javascript module for threads
 
 export type RuntimeHelpers = {
     runtime_interop_module: MonoAssembly;
@@ -128,6 +161,7 @@ export type RuntimeHelpers = {
     mono_wasm_load_runtime_done: boolean;
     mono_wasm_runtime_is_ready: boolean;
     mono_wasm_bindings_is_ready: boolean;
+    mono_wasm_symbols_are_ready: boolean;
 
     loaded_files: string[];
     maxParallelDownloads: number;
@@ -194,13 +228,6 @@ export type DotnetModuleConfigImports = {
     };
     url?: any;
 }
-
-export interface LoadingResource {
-    name: string;
-    url: string;
-    response: Promise<Response>;
-}
-
 
 // see src\mono\wasm\runtime\rollup.config.js
 // inline this, because the lambda could allocate closure on hot path otherwise
