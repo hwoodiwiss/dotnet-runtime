@@ -5688,7 +5688,7 @@ void Compiler::fgMorphCallInlineHelper(GenTreeCall* call, InlineResult* result, 
         // Undo some changes made in anticipation of inlining...
 
         // Zero out the used locals
-        memset(lvaTable + startVars, 0, (lvaCount - startVars) * sizeof(*lvaTable));
+        memset((void*)(lvaTable + startVars), 0, (lvaCount - startVars) * sizeof(*lvaTable));
         for (unsigned i = startVars; i < lvaCount; i++)
         {
             new (&lvaTable[i], jitstd::placement_t()) LclVarDsc(); // call the constructor.
@@ -11840,7 +11840,7 @@ GenTree* Compiler::fgOptimizeCastOnAssignment(GenTreeOp* asg)
 
     GenTree* const effectiveOp1 = op1->gtEffectiveVal();
 
-    if (!effectiveOp1->OperIs(GT_IND, GT_LCL_VAR))
+    if (!effectiveOp1->OperIs(GT_IND, GT_LCL_VAR, GT_LCL_FLD))
         return asg;
 
     if (effectiveOp1->OperIs(GT_LCL_VAR) &&
