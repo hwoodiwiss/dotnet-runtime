@@ -18,6 +18,14 @@ namespace Microsoft.Extensions.Hosting
         public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
+        /// The delay between receiving a stop signal and initiating shutdown.
+        /// </summary>
+        /// <remarks>
+        ///  Defaults to <see langword="null"/>
+        /// </remarks>
+        public TimeSpan? ShutdownDelay { get; set; }
+
+        /// <summary>
         /// Determines if the <see cref="IHost"/> will start registered instances of <see cref="IHostedService"/> concurrently or sequentially. Defaults to false.
         /// </summary>
         public bool ServicesStartConcurrently { get; set; }
@@ -39,11 +47,18 @@ namespace Microsoft.Extensions.Hosting
 
         internal void Initialize(IConfiguration configuration)
         {
-            var timeoutSeconds = configuration["shutdownTimeoutSeconds"];
-            if (!string.IsNullOrEmpty(timeoutSeconds)
-                && int.TryParse(timeoutSeconds, NumberStyles.None, CultureInfo.InvariantCulture, out var seconds))
+            var configuredTimeoutSeconds = configuration["shutdownTimeoutSeconds"];
+            if (!string.IsNullOrEmpty(configuredTimeoutSeconds)
+                && int.TryParse(configuredTimeoutSeconds, NumberStyles.None, CultureInfo.InvariantCulture, out var timeoutSeconds))
             {
-                ShutdownTimeout = TimeSpan.FromSeconds(seconds);
+                ShutdownTimeout = TimeSpan.FromSeconds(timeoutSeconds);
+            }
+
+            var configuredDelaySeconds = configuration["shutdownDelaySeconds"];
+            if (!string.IsNullOrEmpty(configuredDelaySeconds)
+                && int.TryParse(configuredDelaySeconds, NumberStyles.None, CultureInfo.InvariantCulture, out var delaySeconds))
+            {
+                ShutdownDelay = TimeSpan.FromSeconds(delaySeconds);
             }
 
             var servicesStartConcurrently = configuration["servicesStartConcurrently"];
