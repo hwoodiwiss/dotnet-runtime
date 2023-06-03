@@ -108,6 +108,7 @@ namespace Microsoft.Extensions.Hosting
         public bool ServicesStartConcurrently { get { throw null; } set { } }
         public bool ServicesStopConcurrently { get { throw null; } set { } }
         public System.TimeSpan ShutdownTimeout { get { throw null; } set { } }
+        public System.TimeSpan? ShutdownDelay { get { throw null; } set { } }
     }
 }
 namespace Microsoft.Extensions.Hosting.Internal
