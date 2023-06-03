@@ -5,6 +5,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Bcl.AsyncInterfac
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Bcl.AsyncInterfaces", "..\Microsoft.Bcl.AsyncInterfaces\src\Microsoft.Bcl.AsyncInterfaces.csproj", "{C24E4188-27CB-4E00-A5F0-62AE23D536EE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Bcl.TimeProvider", "..\Microsoft.Bcl.TimeProvider\ref\Microsoft.Bcl.TimeProvider.csproj", "{0C81E7F5-E940-4053-AAA6-D1F3E36BBC81}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Bcl.TimeProvider", "..\Microsoft.Bcl.TimeProvider\src\Microsoft.Bcl.TimeProvider.csproj", "{52F30569-EF5C-46EE-8429-B2C01EE518AC}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Extensions.Configuration.Abstractions", "..\Microsoft.Extensions.Configuration.Abstractions\ref\Microsoft.Extensions.Configuration.Abstractions.csproj", "{EDAC3418-1D4E-4216-9371-0A36EA1E13FE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Extensions.Configuration.Abstractions", "..\Microsoft.Extensions.Configuration.Abstractions\src\Microsoft.Extensions.Configuration.Abstractions.csproj", "{020874FC-11A2-4FC7-8929-527462F8819A}"
@@ -557,6 +561,8 @@ Global
 		{0A495D7B-44DE-4E59-8497-6CBF7C55CFA5} = {A9A8D649-4C09-4FD1-9837-EE7B9D902253}
 		{B69B7D59-6E7D-43FC-B83F-AA481B677B06} = {A9A8D649-4C09-4FD1-9837-EE7B9D902253}
 		{4F7612BF-0AFB-4AC5-952F-7D12D99FA357} = {A9A8D649-4C09-4FD1-9837-EE7B9D902253}
+		{52F30569-EF5C-46EE-8429-B2C01EE518AC} = {59A29BF0-B76B-41F8-A733-E2A0847AB992}
+		{0C81E7F5-E940-4053-AAA6-D1F3E36BBC81} = {E041754F-1A93-443A-9294-87DC1C30B471}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {971198CC-ACB9-4718-9024-42A87E02E503}

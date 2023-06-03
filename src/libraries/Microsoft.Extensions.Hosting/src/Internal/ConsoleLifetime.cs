@@ -27,17 +27,22 @@ namespace Microsoft.Extensions.Hosting.Internal
             : this(options, environment, applicationLifetime, hostOptions, NullLoggerFactory.Instance) { }
 
         public ConsoleLifetime(IOptions<ConsoleLifetimeOptions> options, IHostEnvironment environment, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions, ILoggerFactory loggerFactory)
+            : this(options, environment, applicationLifetime, hostOptions, loggerFactory, TimeProvider.System) { }
+
+        public ConsoleLifetime(IOptions<ConsoleLifetimeOptions> options, IHostEnvironment environment, IHostApplicationLifetime applicationLifetime, IOptions<HostOptions> hostOptions, ILoggerFactory loggerFactory, TimeProvider timeProvider)
         {
             ThrowHelper.ThrowIfNull(options?.Value, nameof(options));
             ThrowHelper.ThrowIfNull(applicationLifetime);
             ThrowHelper.ThrowIfNull(environment);
             ThrowHelper.ThrowIfNull(hostOptions?.Value, nameof(hostOptions));
+            ThrowHelper.ThrowIfNull(timeProvider);
 
             Options = options.Value;
             Environment = environment;
             ApplicationLifetime = applicationLifetime;
             HostOptions = hostOptions.Value;
             Logger = loggerFactory.CreateLogger("Microsoft.Hosting.Lifetime");
+            TimeProvider = timeProvider;
         }
 
         private ConsoleLifetimeOptions Options { get; }
@@ -49,6 +54,8 @@ namespace Microsoft.Extensions.Hosting.Internal
         private HostOptions HostOptions { get; }
 
         private ILogger Logger { get; }
+
+        private TimeProvider TimeProvider { get; }
 
         public Task WaitForStartAsync(CancellationToken cancellationToken)
         {
