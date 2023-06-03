@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.Hosting.Internal
             {
                 _shutdownDelayTimer = NonCapturingTimer.Create(state =>
                 {
-                    Logger.LogInformation("Received {PosixSignal}. Delaying shutdown for {Delay}", context.Signal, HostOptions.ShutdownDelay.Value);
+                    Logger.LogInformation("Shutting down in {Delay}", HostOptions.ShutdownDelay.Value);
                     ((ConsoleLifetime)state!).ApplicationLifetime.StopApplication();
                 },
                 this,
