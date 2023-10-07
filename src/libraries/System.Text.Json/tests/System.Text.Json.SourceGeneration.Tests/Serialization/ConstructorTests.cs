@@ -41,6 +41,9 @@ namespace System.Text.Json.SourceGeneration.Tests
         [JsonSerializable(typeof(PrivateParameterizedCtor_WithAttribute))]
         [JsonSerializable(typeof(InternalParameterizedCtor_WithAttribute))]
         [JsonSerializable(typeof(ProtectedParameterizedCtor_WithAttribute))]
+        [JsonSerializable(typeof(PrivateParameterlessCtor_WithAttribute))]
+        [JsonSerializable(typeof(InternalParameterlessCtor_WithAttribute))]
+        [JsonSerializable(typeof(ProtectedParameterlessCtor_WithAttribute))]
         [JsonSerializable(typeof(SinglePublicParameterizedCtor))]
         [JsonSerializable(typeof(SingleParameterlessCtor_MultiplePublicParameterizedCtor))]
         [JsonSerializable(typeof(SingleParameterlessCtor_MultiplePublicParameterizedCtor_Struct))]
@@ -149,6 +152,7 @@ namespace System.Text.Json.SourceGeneration.Tests
         [JsonSerializable(typeof(ClassWithInvalidDictionary))]
         [JsonSerializable(typeof(TypeWithEnumParameters))]
         [JsonSerializable(typeof(ClassWithIgnoredPropertyDefaultParam))]
+        [JsonSerializable(typeof(ClassWithCustomConverterOnCtorParameter))]
         internal sealed partial class ConstructorTestsContext_Metadata : JsonSerializerContext
         {
         }
@@ -185,6 +189,9 @@ namespace System.Text.Json.SourceGeneration.Tests
         [JsonSerializable(typeof(PrivateParameterizedCtor_WithAttribute))]
         [JsonSerializable(typeof(InternalParameterizedCtor_WithAttribute))]
         [JsonSerializable(typeof(ProtectedParameterizedCtor_WithAttribute))]
+        [JsonSerializable(typeof(PrivateParameterlessCtor_WithAttribute))]
+        [JsonSerializable(typeof(InternalParameterlessCtor_WithAttribute))]
+        [JsonSerializable(typeof(ProtectedParameterlessCtor_WithAttribute))]
         [JsonSerializable(typeof(SinglePublicParameterizedCtor))]
         [JsonSerializable(typeof(SingleParameterlessCtor_MultiplePublicParameterizedCtor))]
         [JsonSerializable(typeof(SingleParameterlessCtor_MultiplePublicParameterizedCtor_Struct))]
@@ -293,6 +300,7 @@ namespace System.Text.Json.SourceGeneration.Tests
         [JsonSerializable(typeof(ClassWithInvalidDictionary))]
         [JsonSerializable(typeof(TypeWithEnumParameters))]
         [JsonSerializable(typeof(ClassWithIgnoredPropertyDefaultParam))]
+        [JsonSerializable(typeof(ClassWithCustomConverterOnCtorParameter))]
         internal sealed partial class ConstructorTestsContext_Default : JsonSerializerContext
         {
         }

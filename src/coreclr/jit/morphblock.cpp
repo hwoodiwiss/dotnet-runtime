@@ -359,10 +359,9 @@ void MorphInitBlockHelper::TryInitFieldByField()
         return;
     }
 
-    if (destLclVar->lvCustomLayout && destLclVar->lvContainsHoles)
+    if (destLclVar->lvAnySignificantPadding)
     {
-        // TODO-1stClassStructs: there are no reasons for this pessimization, delete it.
-        JITDUMP(" dest has custom layout and contains holes.\n");
+        JITDUMP(" dest has significant padding.\n");
         return;
     }
 
@@ -776,17 +775,17 @@ void MorphCopyBlockHelper::MorphStructCases()
     }
 
     // Can we use field by field assignment for the dest?
-    if (m_dstDoFldStore && m_dstVarDsc->lvCustomLayout && m_dstVarDsc->lvContainsHoles)
+    if (m_dstDoFldStore && m_dstVarDsc->lvAnySignificantPadding)
     {
-        JITDUMP(" dest contains custom layout and contains holes");
+        JITDUMP(" dest has significant padding");
         // C++ style CopyBlock with holes
         requiresCopyBlock = true;
     }
 
     // Can we use field by field assignment for the src?
-    if (m_srcDoFldStore && m_srcVarDsc->lvCustomLayout && m_srcVarDsc->lvContainsHoles)
+    if (m_srcDoFldStore && m_srcVarDsc->lvAnySignificantPadding)
     {
-        JITDUMP(" src contains custom layout and contains holes");
+        JITDUMP(" src has significant padding");
         // C++ style CopyBlock with holes
         requiresCopyBlock = true;
     }
@@ -1184,8 +1183,7 @@ GenTree* MorphCopyBlockHelper::CopyFieldByField()
         addrSpillTemp = m_comp->lvaGrabTemp(true DEBUGARG("BlockOp address local"));
 
         LclVarDsc* addrSpillDsc = m_comp->lvaGetDesc(addrSpillTemp);
-        addrSpillDsc->lvType = addrSpill->TypeIs(TYP_REF) ? TYP_REF : TYP_BYREF; // TODO-ASG: zero-diff quirk, delete.
-        addrSpillStore       = m_comp->gtNewTempStore(addrSpillTemp, addrSpill);
+        addrSpillStore          = m_comp->gtNewTempStore(addrSpillTemp, addrSpill);
     }
 
     auto grabAddr = [=, &result](unsigned offs) {
@@ -1228,7 +1226,12 @@ GenTree* MorphCopyBlockHelper::CopyFieldByField()
             // handling.
             GenTreeIntCon* fldOffsetNode = m_comp->gtNewIconNode(fullOffs, TYP_I_IMPL);
             fldOffsetNode->gtFieldSeq    = addrBaseOffsFldSeq;
-            addrClone                    = m_comp->gtNewOperNode(GT_ADD, TYP_BYREF, addrClone, fldOffsetNode);
+            addrClone = m_comp->gtNewOperNode(GT_ADD, varTypeIsGC(addrClone) ? TYP_BYREF : TYP_I_IMPL, addrClone,
+                                              fldOffsetNode);
+            // Avoid constant prop propagating each field access with a large
+            // constant address. TODO-Cleanup: We should tune constant prop to
+            // have better heuristics around this.
+            addrClone->gtFlags |= GTF_DONT_CSE;
         }
 
         return addrClone;

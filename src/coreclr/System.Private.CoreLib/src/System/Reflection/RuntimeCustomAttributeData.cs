@@ -114,7 +114,7 @@ namespace System.Reflection
             if (type == typeof(int))
                 return CustomAttributeEncoding.Int32;
 
-            if (type.IsEnum)
+            if (type.IsActualEnum)
                 return CustomAttributeEncoding.Enum;
 
             if (type == typeof(string))
@@ -172,7 +172,7 @@ namespace System.Reflection
             if (type.IsInterface)
                 return CustomAttributeEncoding.Object;
 
-            if (type.IsValueType)
+            if (type.IsActualValueType)
                 return CustomAttributeEncoding.Undefined;
 
             throw new ArgumentException(SR.Argument_InvalidKindOfTypeForCA, nameof(type));
@@ -278,7 +278,7 @@ namespace System.Reflection
                 m_ctor = (RuntimeConstructorInfo)scope.ResolveMethod(caCtorToken, attributeType.GenericTypeArguments, null)!.MethodHandle.GetMethodInfo();
             }
 
-            ParameterInfo[] parameters = m_ctor.GetParametersNoCopy();
+            ReadOnlySpan<ParameterInfo> parameters = m_ctor.GetParametersAsSpan();
             if (parameters.Length != 0)
             {
                 m_ctorParams = new CustomAttributeCtorParameter[parameters.Length];
@@ -412,7 +412,7 @@ namespace System.Reflection
             // Ensure there is only a single constructor for 'pca', so it is safe to suppress IL2075
             ConstructorInfo[] allCtors = type.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             Debug.Assert(allCtors.Length == 1);
-            Debug.Assert(allCtors[0].GetParameters().Length == 0);
+            Debug.Assert(allCtors[0].GetParametersAsSpan().Length == 0);
 #endif
 
             m_ctor = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance)[0];
@@ -928,7 +928,7 @@ namespace System.Reflection
             // if we are asked to go up the hierarchy chain we have to do it now and regardless of the
             // attribute usage for the specific attribute because a derived attribute may override the usage...
             // ... however if the attribute is sealed we can rely on the attribute usage
-            if (!inherit || (caType.IsSealed && !CustomAttribute.GetAttributeUsage(caType).Inherited))
+            if (!inherit || (caType.IsSealed && !GetAttributeUsage(caType).Inherited))
             {
                 object[] attributes = GetCustomAttributes(type.GetRuntimeModule(), type.MetadataToken, pcas.Count, caType);
                 if (pcas.Count > 0) pcas.CopyTo(attributes, attributes.Length - pcas.Count);
@@ -970,7 +970,7 @@ namespace System.Reflection
             // if we are asked to go up the hierarchy chain we have to do it now and regardless of the
             // attribute usage for the specific attribute because a derived attribute may override the usage...
             // ... however if the attribute is sealed we can rely on the attribute usage
-            if (!inherit || (caType.IsSealed && !CustomAttribute.GetAttributeUsage(caType).Inherited))
+            if (!inherit || (caType.IsSealed && !GetAttributeUsage(caType).Inherited))
             {
                 object[] attributes = GetCustomAttributes(method.GetRuntimeModule(), method.MetadataToken, pcas.Count, caType);
                 if (pcas.Count > 0) pcas.CopyTo(attributes, attributes.Length - pcas.Count);
@@ -1241,9 +1241,9 @@ namespace System.Reflection
                                 }
                             }
 
-                            PropertyInfo? property = type is null ?
+                            RuntimePropertyInfo? property = (RuntimePropertyInfo?)(type is null ?
                                 attributeType.GetProperty(name) :
-                                attributeType.GetProperty(name, type, Type.EmptyTypes);
+                                attributeType.GetProperty(name, type, Type.EmptyTypes));
 
                             // Did we get a valid property reference?
                             if (property is null)
@@ -1251,7 +1251,7 @@ namespace System.Reflection
                                 throw new CustomAttributeFormatException(SR.Format(SR.RFLCT_InvalidPropFail, name));
                             }
 
-                            MethodInfo setMethod = property.GetSetMethod(true)!;
+                            RuntimeMethodInfo setMethod = property.GetSetMethod(true)!;
 
                             // Public properties may have non-public setter methods
                             if (!setMethod.IsPublic)
@@ -1259,7 +1259,7 @@ namespace System.Reflection
                                 continue;
                             }
 
-                            setMethod.Invoke(attribute, BindingFlags.Default, null, new object?[] { value }, null);
+                            setMethod.InvokePropertySetter(attribute, BindingFlags.Default, null, value, null);
                         }
                         else
                         {
@@ -1477,7 +1477,7 @@ namespace System.Reflection
             {
                 useAttributeArray = true;
             }
-            else if (caType.IsValueType)
+            else if (caType.IsActualValueType)
             {
                 useObjectArray = true;
             }
